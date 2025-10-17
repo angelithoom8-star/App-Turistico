@@ -1,58 +1,62 @@
-name: Build APK Robust
+name: Build APK Release
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  build-apk:
+  build-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Clonar repositorio
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk autoconf automake libtool m4 unzip zip git
-          python3 -m pip install --upgrade pip
-          pip install --upgrade cython buildozer kivy pillow kivy-garden
-          python3 -m pip install ffpyplayer
-          pip install "kivy-garden.mapview==1.0.6"
+    - name: Instalar dependencias del sistema
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libffi-dev libssl-dev libsqlite3-dev \
+          libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
+          automake libtool m4 unzip zip git
 
-      - name: Configure buildozer.spec safely
-        run: |
-          if [ -f buildozer.spec ]; then
-            echo "buildozer.spec found, updating required fields..."
-          else
-            echo "ERROR: No buildozer.spec found!" && exit 1
-          fi
+    - name: Instalar Buildozer y librerías
+      run: |
+        pip install --upgrade pip
+        pip install cython buildozer kivy pillow kivy-garden ffpyplayer
+        pip install "kivy-garden.mapview==1.0.6"
 
-          # Actualiza valores solo si no existen o están comentados
-          sed -i 's/^#\?title *=.*$/title = Palmar Grande/' buildozer.spec
-          sed -i 's/^#\?package.name *=.*$/package.name = palmargrande/' buildozer.spec
-          sed -i 's/^#\?package.domain *=.*$/package.domain = org.angelithoom8/' buildozer.spec
-          sed -i 's/^#\?source.dir *=.*$/source.dir = ./' buildozer.spec
-          sed -i 's|^#\?icon.filename *=.*$|icon.filename = logo_app.jpeg|' buildozer.spec
-          sed -i 's/^#\?version *=.*$/version = 1.0.0/' buildozer.spec
-          sed -i 's/^#\?requirements *=.*$/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
+    - name: Generar clave de firma temporal
+      run: |
+        keytool -genkey -v -keystore release.keystore -alias palmargrande \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass android -keypass android \
+          -dname "CN=Angel, OU=Dev, O=PalmarGrande, L=Corrientes, S=Corrientes, C=AR"
 
-      - name: Build APK
-        run: |
-          # Forzar ejecución sin root prompts
-          buildozer android clean || true
-          buildozer -v android debug || exit 1
+    - name: Configurar buildozer.spec
+      run: |
+        sed -i 's/^#\?title *=.*$/title = Palmar Grande/' buildozer.spec
+        sed -i 's/^#\?package.name *=.*$/package.name = palmargrande/' buildozer.spec
+        sed -i 's/^#\?package.domain *=.*$/package.domain = org.angelithoom8/' buildozer.spec
+        sed -i 's/^#\?source.dir *=.*$/source.dir = ./' buildozer.spec
+        sed -i 's|^#\?icon.filename *=.*$|icon.filename = logo_app.jpeg|' buildozer.spec
+        sed -i 's/^#\?version *=.*$/version = 1.0.0/' buildozer.spec
+        sed -i 's/^#\?requirements *=.*$/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer,sdl2/' buildozer.spec
+        echo "android.release_keystore = release.keystore" >> buildozer.spec
+        echo "android.release_keyalias = palmargrande" >> buildozer.spec
+        echo "android.release_keystore_pass = android" >> buildozer.spec
+        echo "android.release_keyalias_pass = android" >> buildozer.spec
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: palmargrande-apk
-          path: bin/*.apk
+    - name: Compilar APK en modo release
+      run: |
+        buildozer android clean || true
+        buildozer -v android release || exit 1
+
+    - name: Subir APK firmado
+      uses: actions/upload-artifact@v4
+      with:
+        name: palmargrande-release-apk
+        path: bin/*.apk

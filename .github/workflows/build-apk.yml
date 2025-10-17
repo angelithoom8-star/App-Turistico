@@ -28,18 +28,16 @@ jobs:
           python3 -m pip install ffpyplayer
           pip install "kivy-garden.mapview==1.0.6"
 
-      - name: Initialize Buildozer
+      - name: Prepare buildozer.spec
         run: |
-          buildozer init
-          # Modifica buildozer.spec automáticamente
-          sed -i 's/^source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,jpg,kv,atlas/' buildozer.spec
-          sed -i 's/^title = My Application/title = Palmar Grande/' buildozer.spec
-          sed -i 's/^package.name = myapp/package.name = palmargrande/' buildozer.spec
-          sed -i 's/^package.domain = org.test/package.domain = org.angelithoom8/' buildozer.spec
-          sed -i 's/^source.dir = ./source.dir = ./' buildozer.spec
-          sed -i 's/^# icon.filename = %(source.dir)s\/data\/icon.png/icon.filename = logo_app.jpeg/' buildozer.spec
-          sed -i 's/^# version = 0.1/version = 1.0.0/' buildozer.spec
-          sed -i 's/^requirements = python3,kivy/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
+          # Edita buildozer.spec existente
+          sed -i 's/^title = .*$/title = Palmar Grande/' buildozer.spec
+          sed -i 's/^package.name = .*$/package.name = palmargrande/' buildozer.spec
+          sed -i 's/^package.domain = .*$/package.domain = org.angelithoom8/' buildozer.spec
+          sed -i 's/^source.dir = .*$/source.dir = ./' buildozer.spec
+          sed -i 's/^# icon.filename = .*$/icon.filename = logo_app.jpeg/' buildozer.spec
+          sed -i 's/^# version = .*$/version = 1.0.0/' buildozer.spec
+          sed -i 's/^requirements = .*$/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
 
       - name: Build APK
         run: |

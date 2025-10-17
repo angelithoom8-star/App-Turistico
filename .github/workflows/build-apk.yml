@@ -1,37 +1,45 @@
-name: Build APK with Buildozer
+name: Build APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build APK with Buildozer
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: 3.12
 
     - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y python3-pip openjdk-17-jdk autoconf automake libtool m4 unzip zip git
-        pip install -U buildozer cython virtualenv kivy pillow kivy-garden ffpyplayer
-        python3 -m pip install "kivy-garden.mapview==1.0.6"
+        python3 -m pip install --upgrade pip
+        pip install --upgrade buildozer cython virtualenv kivy pillow kivy-garden
+        pip install kivy_garden.mapview ffpyplayer
+
+    - name: Accept Android SDK licenses
+      run: yes | buildozer android update sdk
 
     - name: Build APK
       run: |
         buildozer android debug
-        mkdir -p output
-        cp bin/*.apk output/
+      env:
+        # Evitar preguntas interactivas
+        DEBIAN_FRONTEND: noninteractive
 
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
       with:
-        name: PalmarGrande-APK
-        path: output/*.apk
+        name: palmargrande-apk
+        path: bin/*.apk

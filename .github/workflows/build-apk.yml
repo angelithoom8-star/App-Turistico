@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK Robust
 
 on:
   push:
@@ -28,21 +28,28 @@ jobs:
           python3 -m pip install ffpyplayer
           pip install "kivy-garden.mapview==1.0.6"
 
-      - name: Prepare buildozer.spec
+      - name: Configure buildozer.spec safely
         run: |
-          # Edita buildozer.spec existente
-          sed -i 's/^title = .*$/title = Palmar Grande/' buildozer.spec
-          sed -i 's/^package.name = .*$/package.name = palmargrande/' buildozer.spec
-          sed -i 's/^package.domain = .*$/package.domain = org.angelithoom8/' buildozer.spec
-          sed -i 's/^source.dir = .*$/source.dir = ./' buildozer.spec
-          sed -i 's/^# icon.filename = .*$/icon.filename = logo_app.jpeg/' buildozer.spec
-          sed -i 's/^# version = .*$/version = 1.0.0/' buildozer.spec
-          sed -i 's/^requirements = .*$/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
+          if [ -f buildozer.spec ]; then
+            echo "buildozer.spec found, updating required fields..."
+          else
+            echo "ERROR: No buildozer.spec found!" && exit 1
+          fi
+
+          # Actualiza valores solo si no existen o están comentados
+          sed -i 's/^#\?title *=.*$/title = Palmar Grande/' buildozer.spec
+          sed -i 's/^#\?package.name *=.*$/package.name = palmargrande/' buildozer.spec
+          sed -i 's/^#\?package.domain *=.*$/package.domain = org.angelithoom8/' buildozer.spec
+          sed -i 's/^#\?source.dir *=.*$/source.dir = ./' buildozer.spec
+          sed -i 's|^#\?icon.filename *=.*$|icon.filename = logo_app.jpeg|' buildozer.spec
+          sed -i 's/^#\?version *=.*$/version = 1.0.0/' buildozer.spec
+          sed -i 's/^#\?requirements *=.*$/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
 
       - name: Build APK
         run: |
-          buildozer android clean
-          buildozer android debug
+          # Forzar ejecución sin root prompts
+          buildozer android clean || true
+          buildozer -v android debug || exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

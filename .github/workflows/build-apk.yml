@@ -7,39 +7,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build APK with Buildozer
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3-pip openjdk-17-jdk autoconf automake libtool m4 unzip zip git
-        python3 -m pip install --upgrade pip
-        pip install --upgrade buildozer cython virtualenv kivy pillow kivy-garden
-        pip install kivy_garden.mapview ffpyplayer
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip openjdk-17-jdk autoconf automake libtool m4 unzip zip git
+          python3 -m pip install --upgrade pip
+          pip install --upgrade cython buildozer kivy pillow kivy-garden
+          python3 -m pip install ffpyplayer
+          pip install "kivy-garden.mapview==1.0.6"
 
-    - name: Accept Android SDK licenses
-      run: yes | buildozer android update sdk
+      - name: Initialize Buildozer
+        run: |
+          buildozer init
+          # Modifica buildozer.spec automáticamente
+          sed -i 's/^source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,jpg,kv,atlas/' buildozer.spec
+          sed -i 's/^title = My Application/title = Palmar Grande/' buildozer.spec
+          sed -i 's/^package.name = myapp/package.name = palmargrande/' buildozer.spec
+          sed -i 's/^package.domain = org.test/package.domain = org.angelithoom8/' buildozer.spec
+          sed -i 's/^source.dir = ./source.dir = ./' buildozer.spec
+          sed -i 's/^# icon.filename = %(source.dir)s\/data\/icon.png/icon.filename = logo_app.jpeg/' buildozer.spec
+          sed -i 's/^# version = 0.1/version = 1.0.0/' buildozer.spec
+          sed -i 's/^requirements = python3,kivy/requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer/' buildozer.spec
 
-    - name: Build APK
-      run: |
-        buildozer android debug
-      env:
-        # Evitar preguntas interactivas
-        DEBIAN_FRONTEND: noninteractive
+      - name: Build APK
+        run: |
+          buildozer android clean
+          buildozer android debug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: palmargrande-apk
-        path: bin/*.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: palmargrande-apk
+          path: bin/*.apk

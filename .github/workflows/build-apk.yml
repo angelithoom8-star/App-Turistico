@@ -21,7 +21,18 @@ jobs:
         sudo apt update
         sudo apt install -y build-essential libffi-dev libssl-dev libsqlite3-dev \
           libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
-          automake libtool m4 unzip zip git
+          automake libtool m4 unzip zip git wget
+
+    - name: Instalar SDK y aceptar licencias
+      run: |
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+        sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;30.0.3"
 
     - name: Instalar Buildozer y librerías
       run: |
@@ -49,6 +60,7 @@ jobs:
         echo "android.release_keyalias = palmargrande" >> buildozer.spec
         echo "android.release_keystore_pass = android" >> buildozer.spec
         echo "android.release_keyalias_pass = android" >> buildozer.spec
+        echo "android.sdk_path = $HOME/android-sdk" >> buildozer.spec
 
     - name: Compilar APK en modo release
       run: |

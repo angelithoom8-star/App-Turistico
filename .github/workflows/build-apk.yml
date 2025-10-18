@@ -23,6 +23,10 @@ jobs:
           libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
           automake libtool m4 unzip zip git wget aidl
 
+    - name: Instalar herramientas de compilación extra
+      run: |
+        sudo apt-get install -y libtool autoconf automake m4 gettext
+
     - name: Instalar SDK manualmente
       run: |
         mkdir -p $HOME/android-sdk/cmdline-tools

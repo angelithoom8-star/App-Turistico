@@ -23,30 +23,6 @@ jobs:
           libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
           automake libtool m4 unzip zip git wget aidl
 
-    - name: Instalar SDK y aceptar licencias
-      run: |
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
-        sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;30.0.3"
-
-    - name: Crear enlaces simbólicos para sdkmanager y android
-      run: |
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
-        ln -sf $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
-
-    - name: Copiar aidl manualmente
-      run: |
-        AIDL_PATH=$(which aidl)
-        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
-        mkdir -p $TARGET_PATH
-        cp $AIDL_PATH $TARGET_PATH/aidl
-
     - name: Instalar Buildozer y librerías
       run: |
         pip install --upgrade pip
@@ -60,12 +36,21 @@ jobs:
           -storepass android -keypass android \
           -dname "CN=Angel, OU=Dev, O=PalmarGrande, L=Corrientes, S=Corrientes, C=AR"
 
+    - name: Parchear SDK descargado por Buildozer
+      run: |
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
+        ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+
+    - name: Copiar aidl manualmente
+      run: |
+        AIDL_PATH=$(which aidl)
+        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
+        mkdir -p $TARGET_PATH
+        cp $AIDL_PATH $TARGET_PATH/aidl
+
     - name: Compilar APK en modo release
       run: |
-        export ANDROIDSDK=$HOME/android-sdk
-        export ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b
-        export ANDROIDAPI=31
-        export ANDROIDMINAPI=21
         buildozer android clean || true
         buildozer -v android release || exit 1
 

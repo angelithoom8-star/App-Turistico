@@ -39,6 +39,7 @@ jobs:
 
     - name: Reemplazar SDK de Buildozer por el manual
       run: |
+        mkdir -p $HOME/.buildozer/android/platform
         rm -rf $HOME/.buildozer/android/platform/android-sdk
         ln -s $HOME/android-sdk $HOME/.buildozer/android/platform/android-sdk
 

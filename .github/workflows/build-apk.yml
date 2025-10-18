@@ -1,3 +1,19 @@
+[app]
+title = Palmar Grande
+package.name = palmargrande
+package.domain = org.angelithoom8
+source.dir = .
+icon.filename = logo_app.jpeg
+version = 1.0.0
+requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer,sdl2
+orientation = portrait
+fullscreen = 1
+android.permissions = INTERNET
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
+
 # --- Android SDK/NDK Configuration ---
 android.sdk_path = $ANDROIDSDK
 android.ndk_path = $ANDROIDNDK
@@ -9,12 +25,3 @@ android.release_keystore = release.keystore
 android.release_keyalias = palmargrande
 android.release_keystore_pass = android
 android.release_keyalias_pass = android
-
-# --- Requisitos y configuración general ---
-requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer,sdl2
-source.dir = .
-icon.filename = logo_app.jpeg
-title = Palmar Grande
-package.name = palmargrande
-package.domain = org.angelithoom8
-version = 1.0.0

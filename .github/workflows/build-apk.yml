@@ -1,62 +1,6 @@
-name: Build APK Release
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build-release:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Clonar repositorio
-      uses: actions/checkout@v4
-
-    - name: Configurar Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Instalar dependencias del sistema
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential libffi-dev libssl-dev libsqlite3-dev \
-          libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
-          automake libtool m4 unzip zip git wget aidl
-
-    - name: Instalar Buildozer y librerías
-      run: |
-        pip install --upgrade pip
-        pip install cython buildozer kivy pillow kivy-garden ffpyplayer
-        pip install "kivy-garden.mapview==1.0.6"
-
-    - name: Generar clave de firma temporal
-      run: |
-        keytool -genkey -v -keystore release.keystore -alias palmargrande \
-          -keyalg RSA -keysize 2048 -validity 10000 \
-          -storepass android -keypass android \
-          -dname "CN=Angel, OU=Dev, O=PalmarGrande, L=Corrientes, S=Corrientes, C=AR"
-
-    - name: Parchear SDK descargado por Buildozer
-      run: |
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
-        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
-        ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager \
-          $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-
-    - name: Copiar aidl manualmente
-      run: |
-        AIDL_PATH=$(which aidl)
-        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
-        mkdir -p $TARGET_PATH
-        cp $AIDL_PATH $TARGET_PATH/aidl
-
-    - name: Compilar APK en modo release
-      run: |
-        buildozer android clean || true
-        buildozer -v android release || exit 1
-
-    - name: Subir APK firmado
-      uses: actions/upload-artifact@v4
-      with:
-        name: palmargrande-release-apk
-        path: bin/*.apk
+- name: Parchear SDK descargado por Buildozer
+  run: |
+    mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+    touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
+    ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager \
+      $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager

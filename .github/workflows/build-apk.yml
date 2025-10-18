@@ -34,10 +34,11 @@ jobs:
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;30.0.3"
 
-    - name: Crear enlace simbólico para sdkmanager
+    - name: Crear enlaces simbólicos para sdkmanager y android
       run: |
         mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
-        ln -s $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        ln -sf $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
 
     - name: Copiar aidl manualmente
       run: |

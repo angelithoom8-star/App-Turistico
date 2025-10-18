@@ -34,6 +34,11 @@ jobs:
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;30.0.3"
 
+    - name: Crear enlace simbólico para sdkmanager
+      run: |
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+        ln -s $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+
     - name: Copiar aidl manualmente
       run: |
         AIDL_PATH=$(which aidl)
@@ -68,7 +73,7 @@ jobs:
         echo "android.release_keystore_pass = android" >> buildozer.spec
         echo "android.release_keyalias_pass = android" >> buildozer.spec
         echo "android.sdk_path = $HOME/android-sdk" >> buildozer.spec
-        echo "android.ndk_path = $HOME/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
+        echo "android.ndk_path = $HOME/.buildozer/android/platform/android-ndk-r25b" >> buildozer.spec
 
     - name: Compilar APK en modo release
       run: |

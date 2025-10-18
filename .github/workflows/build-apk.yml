@@ -21,7 +21,7 @@ jobs:
         sudo apt update
         sudo apt install -y build-essential libffi-dev libssl-dev libsqlite3-dev \
           libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
-          automake libtool m4 unzip zip git wget
+          automake libtool m4 unzip zip git wget aidl
 
     - name: Instalar SDK y aceptar licencias
       run: |
@@ -33,6 +33,13 @@ jobs:
         export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-33" "build-tools;30.0.3"
+
+    - name: Copiar aidl manualmente
+      run: |
+        AIDL_PATH=$(which aidl)
+        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
+        mkdir -p $TARGET_PATH
+        cp $AIDL_PATH $TARGET_PATH/aidl
 
     - name: Instalar Buildozer y librerías
       run: |

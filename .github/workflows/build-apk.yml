@@ -40,7 +40,8 @@ jobs:
       run: |
         mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
         touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
-        ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        ln -sf /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager \
+          $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
     - name: Copiar aidl manualmente
       run: |

@@ -37,6 +37,11 @@ jobs:
         echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
+    - name: Reemplazar SDK de Buildozer por el manual
+      run: |
+        rm -rf $HOME/.buildozer/android/platform/android-sdk
+        ln -s $HOME/android-sdk $HOME/.buildozer/android/platform/android-sdk
+
     - name: Instalar Buildozer y librerías
       run: |
         pip install --upgrade pip
@@ -50,17 +55,17 @@ jobs:
           -storepass android -keypass android \
           -dname "CN=Angel, OU=Dev, O=PalmarGrande, L=Corrientes, S=Corrientes, C=AR"
 
-    - name: Parchear SDK descargado por Buildozer
+    - name: Parchear estructura esperada por Buildozer
       run: |
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
-        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
+        mkdir -p $HOME/android-sdk/tools/bin
+        touch $HOME/android-sdk/tools/bin/android
         ln -sf $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          $HOME/android-sdk/tools/bin/sdkmanager
 
     - name: Copiar aidl manualmente
       run: |
         AIDL_PATH=$(which aidl)
-        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
+        TARGET_PATH=$HOME/android-sdk/build-tools/30.0.3
         mkdir -p $TARGET_PATH
         cp $AIDL_PATH $TARGET_PATH/aidl
 

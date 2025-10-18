@@ -32,6 +32,9 @@ jobs:
         yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" "platforms;android-31" "build-tools;30.0.3"
 
+    - name: Exportar ruta del SDK manual
+      run: echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+
     - name: Instalar Buildozer y librerías
       run: |
         pip install --upgrade pip

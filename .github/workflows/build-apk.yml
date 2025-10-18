@@ -1,27 +1,76 @@
-[app]
-title = Palmar Grande
-package.name = palmargrande
-package.domain = org.angelithoom8
-source.dir = .
-icon.filename = logo_app.jpeg
-version = 1.0.0
-requirements = python3,kivy,pillow,kivy_garden.mapview,ffpyplayer,sdl2
-orientation = portrait
-fullscreen = 1
-android.permissions = INTERNET
+name: Build APK Release
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
+on:
+  workflow_dispatch:
 
-# --- Android SDK/NDK Configuration ---
-android.sdk_path = $ANDROIDSDK
-android.ndk_path = $ANDROIDNDK
-android.api = 31
-android.minapi = 21
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
 
-# --- Firma del APK ---
-android.release_keystore = release.keystore
-android.release_keyalias = palmargrande
-android.release_keystore_pass = android
-android.release_keyalias_pass = android
+    steps:
+    - name: Clonar repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Instalar dependencias del sistema
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libffi-dev libssl-dev libsqlite3-dev \
+          libncurses5-dev libjpeg-dev libpng-dev libz-dev openjdk-17-jdk autoconf \
+          automake libtool m4 unzip zip git wget aidl
+
+    - name: Instalar SDK y aceptar licencias
+      run: |
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        unzip commandlinetools-linux-8512546_latest.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+        sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+
+    - name: Crear enlaces simbólicos para sdkmanager y android
+      run: |
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+        ln -sf $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        touch $HOME/.buildozer/android/platform/android-sdk/tools/bin/android
+
+    - name: Copiar aidl manualmente
+      run: |
+        AIDL_PATH=$(which aidl)
+        TARGET_PATH=$HOME/.buildozer/android/platform/android-sdk/build-tools/30.0.3
+        mkdir -p $TARGET_PATH
+        cp $AIDL_PATH $TARGET_PATH/aidl
+
+    - name: Instalar Buildozer y librerías
+      run: |
+        pip install --upgrade pip
+        pip install cython buildozer kivy pillow kivy-garden ffpyplayer
+        pip install "kivy-garden.mapview==1.0.6"
+
+    - name: Generar clave de firma temporal
+      run: |
+        keytool -genkey -v -keystore release.keystore -alias palmargrande \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass android -keypass android \
+          -dname "CN=Angel, OU=Dev, O=PalmarGrande, L=Corrientes, S=Corrientes, C=AR"
+
+    - name: Compilar APK en modo release
+      run: |
+        export ANDROIDSDK=$HOME/android-sdk
+        export ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b
+        export ANDROIDAPI=31
+        export ANDROIDMINAPI=21
+        buildozer android clean || true
+        buildozer -v android release || exit 1
+
+    - name: Subir APK firmado
+      uses: actions/upload-artifact@v4
+      with:
+        name: palmargrande-release-apk
+        path: bin/*.apk

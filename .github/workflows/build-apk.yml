@@ -61,6 +61,7 @@ jobs:
         echo "android.release_keystore_pass = android" >> buildozer.spec
         echo "android.release_keyalias_pass = android" >> buildozer.spec
         echo "android.sdk_path = $HOME/android-sdk" >> buildozer.spec
+        echo "android.ndk_path = $HOME/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
 
     - name: Compilar APK en modo release
       run: |

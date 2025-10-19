@@ -10,7 +10,7 @@ orientation = portrait
 fullscreen = 0
 icon.filename = logo_app.jpeg
 
-# Permisos necesarios para ubicación y red
+# Permisos necesarios
 android.permissions = INTERNET, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION
 
 # Arquitecturas Android

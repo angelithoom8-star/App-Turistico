@@ -1,3 +1,0 @@
-- name: Limpiar residuos previos
-  run: |
-    rm -rf .buildozer .buildozer_global bin

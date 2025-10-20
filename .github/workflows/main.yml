@@ -21,56 +21,28 @@ jobs:
     - name: 🧰 Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libffi-dev libssl-dev \
-          libjpeg-dev libfreetype6-dev zlib1g-dev libncurses6 libstdc++6 \
-          adb fastboot
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip \
+          libffi-dev libssl-dev libjpeg-dev libfreetype6-dev zlib1g-dev \
+          libncurses6 libstdc++6 adb fastboot autoconf automake libtool pkg-config
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: 📦 Download Android SDK & NDK manual
+    - name: 📦 Download Android SDK & NDK
       run: |
         mkdir -p $HOME/android-sdk
-        mkdir -p $HOME/android-ndk
-        cd $HOME
         wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip -d android-sdk/
-        mv android-sdk/cmdline-tools android-sdk/cmdline-tools-temp
-        mkdir -p android-sdk/cmdline-tools/latest
-        mv android-sdk/cmdline-tools-temp/* android-sdk/cmdline-tools/latest/
-        yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${HOME}/android-sdk \
+        unzip cmdline-tools.zip -d $HOME/android-sdk/
+        mv $HOME/android-sdk/cmdline-tools $HOME/android-sdk/cmdline-tools-temp
+        mkdir -p $HOME/android-sdk/cmdline-tools/latest
+        mv $HOME/android-sdk/cmdline-tools-temp/* $HOME/android-sdk/cmdline-tools/latest/
+        yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
 
     - name: 🔧 Set environment variables
       run: |
-        echo 'ANDROIDSDK=$HOME/android-sdk' >> $GITHUB_ENV
-        echo 'ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653' >> $GITHUB_ENV
-        echo 'PATH=$HOME/.local/bin:$PATH' >> $GITHUB_ENV
-
-    - name: 🛠️ Update buildozer.spec with Python
-      run: |
-        import fileinput, os
-        sdk_path = os.environ["ANDROIDSDK"]
-        ndk_path = os.environ["ANDROIDNDK"]
-        with fileinput.FileInput("buildozer.spec", inplace=True) as file:
-            for line in file:
-                if line.startswith("android.sdk_path ="):
-                    print(f"android.sdk_path = {sdk_path}")
-                elif line.startswith("android.ndk_path ="):
-                    print(f"android.ndk_path = {ndk_path}")
-                else:
-                    print(line, end="")
-      shell: python
-
-    - name: ✅ Validate buildozer.spec paths with Python
-      run: |
-        with open("buildozer.spec") as f:
-            lines = f.readlines()
-            sdk_line = next((l for l in lines if l.startswith("android.sdk_path =")), "No SDK path found")
-            ndk_line = next((l for l in lines if l.startswith("android.ndk_path =")), "No NDK path found")
-            print("🔍 Validando rutas configuradas en buildozer.spec:")
-            print(sdk_line.strip())
-            print(ndk_line.strip())
-      shell: python
+        echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+        echo "PATH=$HOME/.local/bin:$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
     - name: 🚀 Build APK and AAB
       run: |

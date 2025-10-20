@@ -50,16 +50,15 @@ jobs:
         set +e
         buildozer android release || echo "Buildozer release falló"
 
-    - name: Verificar artefactos generados
+    - name: Buscar artefactos en todo el proyecto
       run: |
-        echo "Buscando APK y AAB en rutas esperadas:"
-        find . -type f -name "*.apk"
-        find . -type f -name "*.aab"
+        echo "Buscando .apk y .aab en todo el repo:"
+        find . -type f \( -name "*.apk" -o -name "*.aab" \)
 
-    - name: Upload APK and AAB
+    - name: Upload APK and AAB desde bin/
       uses: actions/upload-artifact@v4
       with:
         name: App-Turistico-Release
         path: |
-          .buildozer/android/platform/build/outputs/apk/release/*.apk
-          .buildozer/android/platform/build/outputs/bundle/release/*.aab
+          bin/*.apk
+          bin/*.aab

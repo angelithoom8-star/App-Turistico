@@ -1,64 +1,22 @@
-name: Build APK and AAB (Release)
 
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  release:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
+    - name: Mostrar log de Buildozer
       run: |
-        sudo apt update || echo "apt update falló"
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev || echo "apt install falló"
-        pip install --upgrade pip || echo "pip upgrade falló"
-        pip install cython || echo "pip install cython falló"
-        pip install buildozer || echo "pip install buildozer falló"
-        pip install kivy pillow plyer || echo "pip install kivy/pillow/plyer falló"
-        pip install kivy_garden.mapview || echo "pip install mapview falló"
-
-    - name: Download Android SDK manually
-      run: |
-        set +e
-        mkdir -p $HOME/android-sdk
-        cd $HOME/android-sdk
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip || echo "wget falló"
-        unzip cmdline-tools.zip || echo "unzip falló"
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/* cmdline-tools/latest/ || echo "mv falló"
-        yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" || echo "sdkmanager falló"
-
-    - name: Set environment variables
-      run: |
-        echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
-
-    - name: Build with Buildozer (Release)
-      run: |
-        set +e
-        buildozer android release || echo "Buildozer release falló"
+        echo "Log de compilación:"
+        cat .buildozer/android/platform/build.log || echo "No se encontró el log"
 
     - name: Buscar artefactos en todo el proyecto
       run: |
         echo "Buscando .apk y .aab en todo el repo:"
         find . -type f \( -name "*.apk" -o -name "*.aab" \)
 
+    - name: Copiar artefactos a bin/
+      run: |
+        mkdir -p bin
+        cp .buildozer/android/platform/build/outputs/apk/release/*.apk bin/ || echo "No se encontró APK"
+        cp .buildozer/android/platform/build/outputs/bundle/release/*.aab bin/ || echo "No se encontró AAB"
+
     - name: Upload APK and AAB desde bin/
       uses: actions/upload-artifact@v4
       with:
         name: App-Turistico-Release
-        path: |
-          bin/*.apk
-          bin/*.aab
+        path: bin/*

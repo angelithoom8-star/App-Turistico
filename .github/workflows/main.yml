@@ -1,106 +1,53 @@
-name: Buildozer APK
+name: Build APK and AAB
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-      PATH: /usr/bin:${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ github.workspace }}/android-sdk/build-tools/36.1.0:$PATH
 
     steps:
-    - name: 📥 Checkout repo
+    - name: Checkout repo
       uses: actions/checkout@v3
 
-    # ─── Cache Buildozer, SDK y pip ─────────────────────────────
-    - name: 💾 Cache SDK y Buildozer
-      uses: actions/cache@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        path: |
-          ~/.buildozer
-          ${{ github.workspace }}/android-sdk
-        key: sdk-buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-        restore-keys: |
-          sdk-buildozer-${{ runner.os }}-
+        python-version: '3.10'
 
-    - name: 💾 Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
-    # ─── Instalar dependencias del sistema ──────────────────────
-    - name: 🧰 Instalar dependencias
+    - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip openjdk-11-jdk unzip wget git tar
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev
+        pip install --upgrade pip
+        pip install buildozer
 
-    # ─── Instalar Buildozer y Cython ───────────────────────────
-    - name: 🐍 Instalar Buildozer y Cython
+    - name: Download Android SDK manually
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install buildozer cython
+        mkdir -p $HOME/android-sdk
+        cd $HOME/android-sdk
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools/* cmdline-tools/latest/
+        yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
 
-    - name: ✅ Verificar Buildozer
+    - name: Set environment variables
       run: |
-        python3 -m buildozer --version
+        echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-    # ─── Descargar Android SDK ─────────────────────────────────
-    - name: 📦 Descargar Android SDK
+    - name: Build with Buildozer
       run: |
-        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-        cd $ANDROID_SDK_ROOT/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk.zip
-        unzip sdk.zip
-        mv cmdline-tools latest
-        rm sdk.zip
+        buildozer android release
 
-    # ─── Aceptar licencias del SDK ────────────────────────────
-    - name: ✅ Aceptar licencias
-      run: |
-        mkdir -p $HOME/.android
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/repositories.cfg
-        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$ANDROID_SDK_ROOT
-
-    # ─── Instalar plataformas y build-tools ───────────────────
-    - name: 🔧 Instalar SDK y build-tools
-      run: |
-        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-          "platform-tools" "platforms;android-36" "build-tools;36.1.0"
-
-    # ─── Verificar aidl ───────────────────────────────────────
-    - name: 🔍 Verificar aidl
-      run: |
-        if [ -f "$ANDROID_SDK_ROOT/build-tools/36.1.0/aidl" ]; then
-          echo "✅ aidl encontrado"
-        else
-          echo "❌ aidl no encontrado"
-          exit 1
-        fi
-
-    # ─── Inicializar Buildozer ───────────────────────────────
-    - name: 🛠️ Inicializar Buildozer
-      run: |
-        python3 -m buildozer android update
-
-    # ─── Limpiar compilaciones previas ───────────────────────
-    - name: 🧹 Limpiar compilaciones previas
-      run: |
-        python3 -m buildozer clean || true
-
-    # ─── Compilar APK ─────────────────────────────────────────
-    - name: 🚀 Compilar APK con Buildozer
-      run: |
-        python3 -m buildozer android debug
-
-    # ─── Subir APK como artefacto ─────────────────────────────
-    - name: 📤 Subir APK generado
-      uses: actions/upload-artifact@v4
+    - name: Upload APK and AAB
+      uses: actions/upload-artifact@v3
       with:
-        name: PalmarGrande-APK
+        name: App-Turistico-Artifacts
         path: |
           bin/*.apk
+          bin/*.aab

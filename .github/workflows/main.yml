@@ -61,11 +61,16 @@ jobs:
                     print(line, end="")
       shell: python
 
-    - name: ✅ Validate buildozer.spec paths
+    - name: ✅ Validate buildozer.spec paths with Python
       run: |
-        echo "🔍 Validando rutas configuradas en buildozer.spec:"
-        grep "android.sdk_path" buildozer.spec
-        grep "android.ndk_path" buildozer.spec
+        with open("buildozer.spec") as f:
+            lines = f.readlines()
+            sdk_line = next((l for l in lines if l.startswith("android.sdk_path =")), "No SDK path found")
+            ndk_line = next((l for l in lines if l.startswith("android.ndk_path =")), "No NDK path found")
+            print("🔍 Validando rutas configuradas en buildozer.spec:")
+            print(sdk_line.strip())
+            print(ndk_line.strip())
+      shell: python
 
     - name: 🚀 Build APK and AAB
       run: |

@@ -3,6 +3,7 @@ name: Buildozer APK
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,22 +13,35 @@ jobs:
       PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ github.workspace }}/android-sdk/build-tools/36.1.0:$PATH
 
     steps:
-    - uses: actions/checkout@v3
+    # 1️⃣ Checkout del repositorio
+    - name: 📥 Checkout repo
+      uses: actions/checkout@v3
 
-    # 1️⃣ Instalar dependencias básicas
-    - name: Instalar dependencias
+    # 2️⃣ Cache opcional para SDK y Buildozer
+    - name: 💾 Cache SDK y Buildozer
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.buildozer
+          ${{ github.workspace }}/android-sdk
+        key: sdk-buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          sdk-buildozer-${{ runner.os }}-
+
+    # 3️⃣ Instalar dependencias básicas
+    - name: 🧰 Instalar dependencias
       run: |
         sudo apt update
-        sudo apt install -y python3-pip openjdk-11-jdk unzip wget git
+        sudo apt install -y python3-pip openjdk-11-jdk unzip wget git tar
 
-    # 2️⃣ Instalar Buildozer y Cython
-    - name: Instalar Buildozer
+    # 4️⃣ Instalar Buildozer y Cython
+    - name: 🐍 Instalar Buildozer
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install buildozer cython
 
-    # 3️⃣ Descargar y configurar Android SDK
-    - name: Descargar Android SDK
+    # 5️⃣ Descargar y configurar Android SDK
+    - name: 📦 Descargar Android SDK
       run: |
         mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
         cd $ANDROID_SDK_ROOT/cmdline-tools
@@ -36,20 +50,20 @@ jobs:
         mv cmdline-tools latest
         rm sdk.zip
 
-    # 4️⃣ Aceptar licencias del SDK
-    - name: ✅ Aceptar licencias del SDK
+    # 6️⃣ Aceptar licencias del SDK
+    - name: ✅ Aceptar licencias
       run: |
         mkdir -p $HOME/.android
         echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/repositories.cfg
         yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$ANDROID_SDK_ROOT
 
-    # 5️⃣ Instalar SDK Platforms y Build-tools
-    - name: Instalar build-tools y plataformas Android
+    # 7️⃣ Instalar plataformas y build-tools
+    - name: 🔧 Instalar SDK y build-tools
       run: |
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
-    # 6️⃣ Verificar que aidl esté disponible
+    # 8️⃣ Validar que aidl esté disponible
     - name: 🔍 Verificar aidl
       run: |
         if [ -f "$ANDROID_SDK_ROOT/build-tools/36.1.0/aidl" ]; then
@@ -59,7 +73,25 @@ jobs:
           exit 1
         fi
 
-    # 7️⃣ Compilar APK con Buildozer
+    # 9️⃣ Preparar entorno Buildozer
+    - name: 🛠️ Inicializar Buildozer
+      run: |
+        buildozer android update
+
+    # 🔟 Limpieza segura
+    - name: 🧹 Limpiar compilaciones previas
+      run: |
+        buildozer clean || true
+
+    # 1️⃣1️⃣ Compilar APK
     - name: 🚀 Compilar APK con Buildozer
       run: |
         buildozer android debug
+
+    # 1️⃣2️⃣ Subir artefactos
+    - name: 📤 Subir APK generado
+      uses: actions/upload-artifact@v4
+      with:
+        name: PalmarGrande-APK
+        path: |
+          bin/*.apk

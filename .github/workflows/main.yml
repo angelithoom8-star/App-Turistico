@@ -34,13 +34,19 @@ jobs:
         sudo apt update
         sudo apt install -y python3-pip openjdk-11-jdk unzip wget git tar
 
-    # 4️⃣ Instalar Buildozer y Cython
+    # 4️⃣ Validar que tar esté disponible
+    - name: 🔍 Verificar tar
+      run: |
+        which tar || (echo "❌ 'tar' no está en el PATH" && exit 1)
+        tar --version || (echo "❌ 'tar' no es ejecutable" && exit 1)
+
+    # 5️⃣ Instalar Buildozer y Cython
     - name: 🐍 Instalar Buildozer
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install buildozer cython
 
-    # 5️⃣ Descargar y configurar Android SDK
+    # 6️⃣ Descargar y configurar Android SDK
     - name: 📦 Descargar Android SDK
       run: |
         mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
@@ -50,20 +56,20 @@ jobs:
         mv cmdline-tools latest
         rm sdk.zip
 
-    # 6️⃣ Aceptar licencias del SDK
+    # 7️⃣ Aceptar licencias del SDK
     - name: ✅ Aceptar licencias
       run: |
         mkdir -p $HOME/.android
         echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.android/repositories.cfg
         yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$ANDROID_SDK_ROOT
 
-    # 7️⃣ Instalar plataformas y build-tools
+    # 8️⃣ Instalar plataformas y build-tools
     - name: 🔧 Instalar SDK y build-tools
       run: |
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
-    # 8️⃣ Validar que aidl esté disponible
+    # 9️⃣ Validar que aidl esté disponible
     - name: 🔍 Verificar aidl
       run: |
         if [ -f "$ANDROID_SDK_ROOT/build-tools/36.1.0/aidl" ]; then
@@ -73,22 +79,22 @@ jobs:
           exit 1
         fi
 
-    # 9️⃣ Preparar entorno Buildozer
+    # 🔟 Preparar entorno Buildozer
     - name: 🛠️ Inicializar Buildozer
       run: |
         buildozer android update
 
-    # 🔟 Limpieza segura
+    # 1️⃣1️⃣ Limpieza segura
     - name: 🧹 Limpiar compilaciones previas
       run: |
         buildozer clean || true
 
-    # 1️⃣1️⃣ Compilar APK
+    # 1️⃣2️⃣ Compilar APK
     - name: 🚀 Compilar APK con Buildozer
       run: |
         buildozer android debug
 
-    # 1️⃣2️⃣ Subir artefactos
+    # 1️⃣3️⃣ Subir artefactos
     - name: 📤 Subir APK generado
       uses: actions/upload-artifact@v4
       with:

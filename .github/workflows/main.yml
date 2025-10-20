@@ -21,7 +21,7 @@ jobs:
     - name: 🧰 Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libffi-dev libssl-dev \
+        sudo apt install -y zip unzip sed openjdk-17-jdk python3-pip libffi-dev libssl-dev \
           libjpeg-dev libfreetype6-dev zlib1g-dev libncurses6 libstdc++6 \
           adb fastboot
         pip install --upgrade pip

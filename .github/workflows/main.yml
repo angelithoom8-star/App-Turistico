@@ -1,4 +1,4 @@
-name: Build APK (Debug)
+name: Build APK and AAB (Release)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -45,23 +45,21 @@ jobs:
         echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-    - name: Build with Buildozer (Debug)
+    - name: Build with Buildozer (Release)
       run: |
         set +e
-        buildozer android debug || echo "Buildozer debug falló"
+        buildozer android release || echo "Buildozer release falló"
 
-    - name: List all files in bin/
+    - name: Verificar artefactos generados
       run: |
-        echo "Contenido completo de bin/:"
-        ls -lh bin/ || echo "No se encontró la carpeta bin"
-
-    - name: Buscar APK en todo el proyecto
-      run: |
-        echo "Buscando archivos .apk en todo el repo:"
+        echo "Buscando APK y AAB en rutas esperadas:"
         find . -type f -name "*.apk"
+        find . -type f -name "*.aab"
 
-    - name: Upload all bin artifacts
+    - name: Upload APK and AAB
       uses: actions/upload-artifact@v4
       with:
-        name: App-Turistico-Debug-All
-        path: bin/**
+        name: App-Turistico-Release
+        path: |
+          .buildozer/android/platform/build/outputs/apk/release/*.apk
+          .buildozer/android/platform/build/outputs/bundle/release/*.aab

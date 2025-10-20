@@ -1,4 +1,4 @@
-name: Build APK and AAB
+name: Build APK (Debug)
 
 on:
   push:
@@ -42,15 +42,18 @@ jobs:
         echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-    - name: Build with Buildozer
+    - name: Build with Buildozer (Debug)
       run: |
         set +e
-        buildozer android release || echo "Buildozer falló"
+        buildozer android debug || echo "Buildozer debug falló"
 
-    - name: Upload APK and AAB
+    - name: List generated artifacts
+      run: |
+        echo "Archivos generados en bin/:"
+        ls -lh bin/ || echo "No se encontraron archivos en bin/"
+
+    - name: Upload APK (Debug)
       uses: actions/upload-artifact@v4
       with:
-        name: App-Turistico-Artifacts
-        path: |
-          bin/*.apk
-          bin/*.aab
+        name: App-Turistico-Debug
+        path: bin/*.apk

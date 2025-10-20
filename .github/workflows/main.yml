@@ -21,7 +21,7 @@ jobs:
     - name: 🧰 Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y zip unzip sed openjdk-17-jdk python3-pip libffi-dev libssl-dev \
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libffi-dev libssl-dev \
           libjpeg-dev libfreetype6-dev zlib1g-dev libncurses6 libstdc++6 \
           adb fastboot
         pip install --upgrade pip
@@ -46,10 +46,29 @@ jobs:
         echo 'ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653' >> $GITHUB_ENV
         echo 'PATH=$HOME/.local/bin:$PATH' >> $GITHUB_ENV
 
-    - name: 🛠️ Build APK and AAB
+    - name: 🛠️ Update buildozer.spec with Python
       run: |
-        sed -i "s|^android.sdk_path =.*|android.sdk_path = ${ANDROIDSDK}|" buildozer.spec
-        sed -i "s|^android.ndk_path =.*|android.ndk_path = ${ANDROIDNDK}|" buildozer.spec
+        import fileinput, os
+        sdk_path = os.environ["ANDROIDSDK"]
+        ndk_path = os.environ["ANDROIDNDK"]
+        with fileinput.FileInput("buildozer.spec", inplace=True) as file:
+            for line in file:
+                if line.startswith("android.sdk_path ="):
+                    print(f"android.sdk_path = {sdk_path}")
+                elif line.startswith("android.ndk_path ="):
+                    print(f"android.ndk_path = {ndk_path}")
+                else:
+                    print(line, end="")
+      shell: python
+
+    - name: ✅ Validate buildozer.spec paths
+      run: |
+        echo "🔍 Validando rutas configuradas en buildozer.spec:"
+        grep "android.sdk_path" buildozer.spec
+        grep "android.ndk_path" buildozer.spec
+
+    - name: 🚀 Build APK and AAB
+      run: |
         buildozer android clean
         buildozer android release
 

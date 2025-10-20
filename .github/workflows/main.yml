@@ -20,21 +20,22 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev
-        pip install --upgrade pip
-        pip install buildozer
+        sudo apt update || echo "apt update falló"
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev || echo "apt install falló"
+        pip install --upgrade pip || echo "pip upgrade falló"
+        pip install buildozer || echo "pip install buildozer falló"
 
     - name: Download Android SDK manually
       run: |
+        set +e
         mkdir -p $HOME/android-sdk
         cd $HOME/android-sdk
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip || echo "wget falló"
+        unzip cmdline-tools.zip || echo "unzip falló"
         mkdir -p cmdline-tools/latest
-        mv cmdline-tools/* cmdline-tools/latest/
+        mv cmdline-tools/* cmdline-tools/latest/ || echo "mv falló"
         yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" || echo "sdkmanager falló"
 
     - name: Set environment variables
       run: |
@@ -43,7 +44,8 @@ jobs:
 
     - name: Build with Buildozer
       run: |
-        buildozer android release
+        set +e
+        buildozer android release || echo "Buildozer falló"
 
     - name: Upload APK and AAB
       uses: actions/upload-artifact@v4

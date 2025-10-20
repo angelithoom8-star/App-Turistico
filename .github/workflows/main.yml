@@ -47,13 +47,18 @@ jobs:
         set +e
         buildozer android debug || echo "Buildozer debug falló"
 
-    - name: List generated artifacts
+    - name: List all files in bin/
       run: |
-        echo "Archivos generados en bin/:"
-        ls -lh bin/ || echo "No se encontraron archivos en bin/"
+        echo "Contenido completo de bin/:"
+        ls -lh bin/ || echo "No se encontró la carpeta bin"
 
-    - name: Upload APK (Debug)
+    - name: Buscar APK en todo el proyecto
+      run: |
+        echo "Buscando archivos .apk en todo el repo:"
+        find . -name "*.apk"
+
+    - name: Upload all bin artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: App-Turistico-Debug
-        path: bin/*.apk
+        name: App-Turistico-Debug-All
+        path: bin/**

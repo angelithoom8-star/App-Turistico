@@ -1,4 +1,4 @@
-name: Build APK (Release)
+name: Build APK (Debug)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  release:
+  debug:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,15 +25,18 @@ jobs:
         pip install --upgrade pip
         pip install cython buildozer kivy pillow plyer kivy_garden.mapview
 
-    - name: Download Android SDK (versión estable)
+    - name: Descargar y configurar Android SDK manualmente
       run: |
-        mkdir -p $HOME/android-sdk
-        cd $HOME/android-sdk
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/* cmdline-tools/latest/
-        cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+        unzip tools.zip
+        mkdir -p $HOME/android-sdk/cmdline-tools/latest
+        mv cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+
+    - name: Instalar componentes del SDK
+      run: |
+        $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
 
     - name: Aceptar licencias del SDK
@@ -45,8 +48,8 @@ jobs:
         echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-    - name: Build with Buildozer (Release)
-      run: buildozer android release
+    - name: Build with Buildozer (Debug)
+      run: buildozer android debug
 
     - name: Mostrar log de Buildozer
       run: cat .buildozer/android/platform/build.log
@@ -57,10 +60,10 @@ jobs:
     - name: Copiar APK a bin/
       run: |
         mkdir -p bin
-        cp .buildozer/android/platform/build/outputs/apk/release/*.apk bin/
+        cp .buildozer/android/platform/build/outputs/apk/debug/*.apk bin/
 
     - name: Upload APK desde bin/
       uses: actions/upload-artifact@v4
       with:
-        name: App-Turistico-Release-APK
+        name: App-Turistico-Debug-APK
         path: bin/*.apk

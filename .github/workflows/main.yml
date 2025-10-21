@@ -13,6 +13,12 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v3
 
+      - name: Instalar JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
 
@@ -40,8 +46,7 @@ jobs:
             liblzma-dev \
             libncurses5-dev \
             libncursesw5-dev \
-            libtinfo5 \
-            openjdk-17-jdk
+            libtinfo5
 
       - name: Instalar Python y Buildozer
         run: |

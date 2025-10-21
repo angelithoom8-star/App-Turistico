@@ -1,4 +1,4 @@
-name: Compilar APK (depurar)
+name: Build APK
 
 on:
   push:
@@ -6,66 +6,58 @@ on:
       - main
 
 jobs:
-  depurar:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
 
     steps:
-    - name: Clonar repositorio
-      uses: actions/checkout@v3
+      - name: Checkout del código
+        uses: actions/checkout@v3
 
-    - name: Instalar dependencias
-      run: |
-        sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev
-        pip install --upgrade pip
-        pip install cython buildozer kivy pillow plyer kivy_garden.mapview
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
 
-    - name: Descargar Apache ANT
-      run: |
-        mkdir -p $HOME/.buildozer/android/platform/apache-ant-1.9.4
-        cd $HOME/.buildozer/android/platform/apache-ant-1.9.4
-        wget https://archive.apache.org/dist/ant/binaries/apache-ant-1.9.4-bin.tar.gz
-        tar -xzf apache-ant-1.9.4-bin.tar.gz
+      - name: Configurar Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
 
-    - name: Descargar Android SDK
-      run: |
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk
-        cd $HOME/.buildozer/android/platform/android-sdk
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdk-tools.zip
-        unzip sdk-tools.zip -d cmdline-tools-temp
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools-temp/* cmdline-tools/latest/
+      - name: Instalar dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libgdbm-dev \
+            libreadline-dev \
+            libbz2-dev \
+            liblzma-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            openjdk-17-jdk
 
-    - name: Aceptar licencias del SDK
-      run: |
-        yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$HOME/.buildozer/android/platform/android-sdk
+      - name: Instalar Python y Buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython
 
-    - name: Instalar componentes del SDK
-      run: |
-        $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+      - name: Limpiar residuos previos
+        run: |
+          rm -rf .buildozer .buildozer_global bin
 
-    - name: Establecer variables de entorno
-      run: |
-        echo "ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+      - name: Compilar APK
+        run: |
+          buildozer android debug
 
-    - name: Compilar APK en modo depuración
-      run: buildozer android debug
-
-    - name: Mostrar log de Buildozer
-      run: cat .buildozer/android/platform/build.log
-
-    - name: Buscar APK generado
-      run: find . -type f -name "*.apk"
-
-    - name: Copiar APK a bin/
-      run: |
-        mkdir -p bin
-        cp .buildozer/android/platform/build/outputs/apk/debug/*.apk bin/
-
-    - name: Subir APK como artefacto
-      uses: actions/upload-artifact@v4
-      with:
-        name: App-Turistico-Debug-APK
-        path: bin/*.apk
+      - name: Subir APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: PalmarGrande-APK
+          path: bin/*.apk

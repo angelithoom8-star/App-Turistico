@@ -1,4 +1,4 @@
-name: Build APK (Debug)
+name: Build APK (Release)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  debug:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -52,10 +52,10 @@ jobs:
         echo "ANDROIDSDK=$HOME/android-sdk" >> $GITHUB_ENV
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-    - name: Build with Buildozer (Debug)
+    - name: Build with Buildozer (Release)
       run: |
         set +e
-        buildozer android debug || echo "Buildozer debug falló"
+        buildozer android release || echo "Buildozer release falló"
 
     - name: Mostrar log de Buildozer
       run: |
@@ -70,10 +70,10 @@ jobs:
     - name: Copiar APK a bin/
       run: |
         mkdir -p bin
-        cp .buildozer/android/platform/build/outputs/apk/debug/*.apk bin/ || echo "No se encontró APK"
+        cp .buildozer/android/platform/build/outputs/apk/release/*.apk bin/ || echo "No se encontró APK"
 
     - name: Upload APK desde bin/
       uses: actions/upload-artifact@v4
       with:
-        name: App-Turistico-Debug-APK
+        name: App-Turistico-Release-APK
         path: bin/*.apk

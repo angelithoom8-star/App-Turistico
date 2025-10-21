@@ -20,32 +20,21 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update || echo "apt update falló"
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev || echo "apt install falló"
-        pip install --upgrade pip || echo "pip upgrade falló"
-        pip install cython || echo "pip install cython falló"
-        pip install buildozer || echo "pip install buildozer falló"
-        pip install kivy pillow plyer || echo "pip install kivy/pillow/plyer falló"
-        pip install kivy_garden.mapview || echo "pip install mapview falló"
+        sudo apt update
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libgl1-mesa-dev
+        pip install --upgrade pip
+        pip install cython buildozer kivy pillow plyer kivy_garden.mapview
 
-    - name: Download Android SDK manualmente (versión estable)
+    - name: Download Android SDK (versión estable sin licencias)
       run: |
-        set +e
         mkdir -p $HOME/android-sdk
         cd $HOME/android-sdk
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip || echo "wget falló"
-        unzip cmdline-tools.zip || echo "unzip falló"
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip
         mkdir -p cmdline-tools/latest
-        mv cmdline-tools/* cmdline-tools/latest/ || echo "mv falló"
-        yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" || echo "sdkmanager falló"
-
-    - name: Verificar instalación de build-tools y aidl
-      run: |
-        echo "Verificando build-tools:"
-        ls -lh $HOME/android-sdk/build-tools || echo "No se encontraron build-tools"
-        echo "Verificando aidl:"
-        ls -lh $HOME/android-sdk/build-tools/33.0.2/aidl || echo "AIDL no está presente"
+        mv cmdline-tools/* cmdline-tools/latest/
+        cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
 
     - name: Set environment variables
       run: |
@@ -53,24 +42,18 @@ jobs:
         echo "ANDROIDNDK=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
     - name: Build with Buildozer (Release)
-      run: |
-        set +e
-        buildozer android release || echo "Buildozer release falló"
+      run: buildozer android release
 
     - name: Mostrar log de Buildozer
-      run: |
-        echo "Log de compilación:"
-        cat .buildozer/android/platform/build.log || echo "No se encontró el log"
+      run: cat .buildozer/android/platform/build.log
 
     - name: Buscar APK generado
-      run: |
-        echo "Buscando .apk en todo el repo:"
-        find . -type f -name "*.apk"
+      run: find . -type f -name "*.apk"
 
     - name: Copiar APK a bin/
       run: |
         mkdir -p bin
-        cp .buildozer/android/platform/build/outputs/apk/release/*.apk bin/ || echo "No se encontró APK"
+        cp .buildozer/android/platform/build/outputs/apk/release/*.apk bin/
 
     - name: Upload APK desde bin/
       uses: actions/upload-artifact@v4

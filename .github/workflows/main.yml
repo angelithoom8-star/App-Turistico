@@ -4,65 +4,63 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del código
-        uses: actions/checkout@v3
+    - name: Checkout del código
+      uses: actions/checkout@v3
 
-      - name: Instalar JDK 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Instalar JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+    - name: Configurar variables de entorno
+      run: |
+        echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk-r25b" >> $GITHUB_ENV
 
-      - name: Configurar Android NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r25c
+    - name: Instalar dependencias del sistema
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip unzip libncurses5 libstdc++6 python3-pip
 
-      - name: Instalar dependencias del sistema
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            zlib1g-dev \
-            libgdbm-dev \
-            libreadline-dev \
-            libbz2-dev \
-            liblzma-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5
+    - name: Instalar Python y Buildozer
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
-      - name: Instalar Python y Buildozer
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
+    - name: Crear carpetas necesarias
+      run: |
+        mkdir -p $HOME/.buildozer/android/platform
 
-      - name: Limpiar residuos previos
-        run: |
-          rm -rf .buildozer .buildozer_global bin
+    - name: Instalar SDK y NDK manualmente
+      run: |
+        cd $HOME/.buildozer/android/platform
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip -q cmdline-tools.zip
+        mkdir -p android-sdk/cmdline-tools/latest
+        mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+        wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+        unzip -q android-ndk-r25b-linux.zip
+        mv android-ndk-r25b android-ndk-r25b
 
-      - name: Compilar APK
-        run: |
-          buildozer android debug
+    - name: Aceptar licencias del SDK
+      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
 
-      - name: Subir APK como artefacto
-        uses: actions/upload-artifact@v4
-        with:
-          name: PalmarGrande-APK
-          path: bin/*.apk
+    - name: Instalar build-tools 36.1.0
+      run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "build-tools;36.1.0" "platform-tools" "platforms;android-33"
+
+    - name: Compilar APK
+      run: buildozer android debug
+
+    - name: Subir APK como artefacto
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug.apk
+        path: bin/*.apk

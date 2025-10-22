@@ -59,4 +59,16 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      -
+      - name: Limpiar residuos previos
+        run: |
+          rm -rf .buildozer .buildozer_global bin
+
+      - name: Compilar APK
+        run: |
+          buildozer android debug
+
+      - name: Subir APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: PalmarGrande-APK
+          path: bin/*.apk
